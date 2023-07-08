@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Any, TypedDict
 
 
 class _MessageBase(TypedDict):
@@ -43,3 +43,9 @@ class ChatResponse(TypedDict):
     model: str
     choices: list[ChatResponseChoices]
     usage: ChatResponseUsage
+
+
+class OpenAIFunction(TypedDict):
+    name: str
+    description: str
+    parameters: dict[str, Any]
