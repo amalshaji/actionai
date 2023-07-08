@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "actionai"
+version = "0.1.0"
+description = "A small library to call local functions using openai function calling"
+authors = ["Amal Shaji <amalshajid@gmail.com>"]
+readme = "README.md"
+packages = [{include = "actionai", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^2.0.2"
+openai = "^0.27.8"
+
+
+[tool.poetry.group.cq.dependencies]
+black = "^23.3.0"
+mypy = "^1.4.1"
+pre-commit = "^3.3.3"
+ruff = "^0.0.277"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
