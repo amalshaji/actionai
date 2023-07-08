@@ -5,7 +5,7 @@ import openai
 from attr import dataclass
 
 from actionai.json_schema import create_json_schema_for_function_input
-from actionai.types import ChatResponse, ChatResponseMessage, Message
+from actionai.types import ChatResponse, ChatResponseMessage, Message, OpenAIFunction
 
 
 class ActionAIException(Exception):
@@ -21,19 +21,22 @@ class ActionAIFunction:
 
 
 class ActionAI:
-    def __init__(self, openai_api_key: str | None = None) -> None:
+    def __init__(
+        self,
+        openai_api_key: str | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> None:
         if openai_api_key is not None:
             openai.api_key = openai_api_key
 
         self.functions: dict[str, ActionAIFunction] = {}
         self.messages: list[Message | ChatResponseMessage] = []
-        self.openai_functions: list | None = None
+        self.openai_functions: list[OpenAIFunction] = []
+        self.context = context or {}
 
     def register(self, fn: Callable):
         if fn.__name__ in self.functions:
-            raise ActionAIException(
-                "function with the same name already registered"
-            )
+            raise ActionAIException("function with the same name already registered")
 
         if fn.__doc__ is None:
             raise ActionAIException("function must have a docstring")
@@ -42,14 +45,15 @@ class ActionAI:
             fn=fn,
             name=fn.__name__,
             description=fn.__doc__,
-            input_schema=create_json_schema_for_function_input(fn),
+            input_schema=create_json_schema_for_function_input(
+                fn=fn, skip_keys=list(self.context.keys())
+            ),
         )
 
     def _set_openai_functions(self):
-        if self.openai_functions is not None:
+        if len(self.functions) == 0:
             return
 
-        self.openai_functions = []
         for fun in self.functions.values():
             self.openai_functions.append(
                 {
@@ -79,10 +83,8 @@ class ActionAI:
 
         function_name = response_message["function_call"]["name"]
         fuction_to_call = self.functions[function_name].fn
-        function_args = json.loads(
-            response_message["function_call"]["arguments"]
-        )
-        function_response = fuction_to_call(**function_args)
+        function_args = json.loads(response_message["function_call"]["arguments"])
+        function_response = fuction_to_call(**function_args, **self.context)
 
         self.messages.append(response_message)
         self.messages.append(
