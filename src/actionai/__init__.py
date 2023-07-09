@@ -6,7 +6,13 @@ from attr import dataclass
 
 from actionai.exceptions import ActionAIException
 from actionai.json_schema import create_json_schema_for_function_input
-from actionai.types import ChatResponse, ChatResponseMessage, Message, OpenAIFunction
+from actionai.types import (
+    OPENAI_MODELS,
+    ChatResponse,
+    ChatResponseMessage,
+    Message,
+    OpenAIFunction,
+)
 
 
 @dataclass
@@ -22,6 +28,7 @@ class ActionAI:
         self,
         openai_api_key: str | None = None,
         context: dict[str, Any] | None = None,
+        model: OPENAI_MODELS = "gpt-3.5-turbo-0613",
     ) -> None:
         """
         Args:
@@ -31,6 +38,9 @@ class ActionAI:
             context (dict[str, Any] | None, optional): These keys will be skipped \
                 when creating json schema for the function's input. The values \
                     will be directly passed during function call.
+
+            model (optional): The chat completion model to use. Defaults to \
+                "gpt-3.5-turbo-0613".
         """
         if openai_api_key is not None:
             openai.api_key = openai_api_key
@@ -39,6 +49,7 @@ class ActionAI:
         self.messages: list[Message | ChatResponseMessage] = []
         self.openai_functions: list[OpenAIFunction] = []
         self.context = context or {}
+        self.model = model
 
     def register(self, fn: Callable):
         if fn.__name__ in self.functions:
@@ -74,7 +85,7 @@ class ActionAI:
         self.messages.append({"role": "user", "content": query})
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-0613",
+            model=self.model,
             messages=self.messages,
             functions=self.openai_functions,
             function_call="auto",
@@ -101,7 +112,7 @@ class ActionAI:
             }
         )
         second_response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-0613",
+            model=self.model,
             messages=self.messages,
         )
         second_response = cast(ChatResponse, second_response)
