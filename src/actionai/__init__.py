@@ -1,8 +1,8 @@
 import json
+from dataclasses import dataclass
 from typing import Any, Callable, cast
 
 import openai
-from attr import dataclass
 
 from actionai.exceptions import ActionAIException
 from actionai.json_schema import create_json_schema_for_function_input
@@ -58,7 +58,7 @@ class ActionAI:
         if fn.__doc__ is None:
             raise ActionAIException("function must have a docstring")
 
-        self.functions[fn.__name__] = ActionAIFunction(  # type: ignore #TODO: Fix this
+        action_function = ActionAIFunction(
             fn=fn,
             name=fn.__name__,
             description=fn.__doc__,
@@ -66,22 +66,16 @@ class ActionAI:
                 fn=fn, skip_keys=list(self.context.keys())
             ),
         )
-
-    def _set_openai_functions(self):
-        if len(self.functions) == 0:
-            return
-
-        for fun in self.functions.values():
-            self.openai_functions.append(
-                {
-                    "name": fun.name,
-                    "description": fun.description,
-                    "parameters": fun.input_schema,
-                }
-            )
+        self.functions[fn.__name__] = action_function
+        self.openai_functions.append(
+            {
+                "name": action_function.name,
+                "description": action_function.description,
+                "parameters": action_function.input_schema,
+            }
+        )
 
     def prompt(self, query: str) -> ChatResponse:
-        self._set_openai_functions()
         self.messages.append({"role": "user", "content": query})
 
         response = openai.ChatCompletion.create(
