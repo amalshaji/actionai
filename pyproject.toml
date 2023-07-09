@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "actionai"
-version = "0.0.3"
+version = "0.0.4"
 description = "A small library to call local functions using openai function calling"
 authors = ["Amal Shaji <amalshajid@gmail.com>"]
 readme = "README.md"
