@@ -56,7 +56,7 @@ class ActionAI:
         self.context = context or {}
         self.model = model
 
-        # Do not update these attribute directly
+        # Do not update these attributes directly
         self._functions: dict[str, ActionAIFunction] = {}
         self._openai_functions: list[OpenAIFunction] = []
 
