@@ -12,7 +12,6 @@ pip install actionai
 
 ```python
 # define a new function
-# example from openai functions examples
 def get_current_weather(location: str, unit: str = "fahrenheit"):
     """Function to get current weather for the given location"""
     weather_info = {
@@ -35,6 +34,14 @@ print(response["choices"][0]["message"]["content"])
 # The current weather at the North Pole is 72°F. It is sunny and windy.
 ```
 
+The openai api key will be read automatically from the `OPENAI_API_KEY` environment variable. You can pass it manually as,
+
+```python
+import actionai
+
+action = actionai.ActionAI(openai_api_key="YOUR_KEY")
+```
+
 ### Adding context
 
 Sometimes your function will have variables that needs to be set by the program.
@@ -51,6 +58,18 @@ The context keys are skipped when creating json schema. The values are directly 
 
 > **Warning**
 > A function must be fully typed and must have a docstring(one liner explanation of the function is enough)
+
+### Choosing a model
+
+By default, the completion run on the `gpt-3.5-turbo-0613` model. You can change the model using the `model` argument.
+
+```python
+import actionai
+
+action = actionai.ActionAI(model="gpt-4")
+```
+
+You can see the complete list of supported chat completion models [here](https://platform.openai.com/docs/models/model-endpoint-compatibility)
 
 ## Demo
 
