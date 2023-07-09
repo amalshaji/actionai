@@ -22,6 +22,13 @@ class ActionAIFunction:
     description: str
     input_schema: Any
 
+    def to_openai_function(self) -> OpenAIFunction:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "parameters": self.input_schema,
+        }
+
 
 class ActionAI:
     def __init__(
@@ -45,14 +52,16 @@ class ActionAI:
         if openai_api_key is not None:
             openai.api_key = openai_api_key
 
-        self.functions: dict[str, ActionAIFunction] = {}
         self.messages: list[Message | ChatResponseMessage] = []
-        self.openai_functions: list[OpenAIFunction] = []
         self.context = context or {}
         self.model = model
 
+        # Do not update these attributes directly
+        self._functions: dict[str, ActionAIFunction] = {}
+        self._openai_functions: list[OpenAIFunction] = []
+
     def register(self, fn: Callable):
-        if fn.__name__ in self.functions:
+        if fn.__name__ in self._functions:
             raise ActionAIException("function with the same name already registered")
 
         if fn.__doc__ is None:
@@ -66,14 +75,8 @@ class ActionAI:
                 fn=fn, skip_keys=list(self.context.keys())
             ),
         )
-        self.functions[fn.__name__] = action_function
-        self.openai_functions.append(
-            {
-                "name": action_function.name,
-                "description": action_function.description,
-                "parameters": action_function.input_schema,
-            }
-        )
+        self._functions[fn.__name__] = action_function
+        self._openai_functions.append(action_function.to_openai_function())
 
     def prompt(self, query: str) -> ChatResponse:
         self.messages.append({"role": "user", "content": query})
@@ -81,7 +84,7 @@ class ActionAI:
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=self.messages,
-            functions=self.openai_functions,
+            functions=self._openai_functions,
             function_call="auto",
         )
 
@@ -93,7 +96,7 @@ class ActionAI:
             return response
 
         function_name = response_message["function_call"]["name"]
-        fuction_to_call = self.functions[function_name].fn
+        fuction_to_call = self._functions[function_name].fn
         function_args = json.loads(response_message["function_call"]["arguments"])
         function_response = fuction_to_call(**function_args, **self.context)
 
