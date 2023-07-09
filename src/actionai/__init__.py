@@ -1,8 +1,8 @@
 import json
+from dataclasses import dataclass
 from typing import Any, Callable, cast
 
 import openai
-from attr import dataclass
 
 from actionai.exceptions import ActionAIException
 from actionai.json_schema import create_json_schema_for_function_input
@@ -58,7 +58,7 @@ class ActionAI:
         if fn.__doc__ is None:
             raise ActionAIException("function must have a docstring")
 
-        action_function = ActionAIFunction(  # type: ignore #TODO: Fix this
+        action_function = ActionAIFunction(
             fn=fn,
             name=fn.__name__,
             description=fn.__doc__,
