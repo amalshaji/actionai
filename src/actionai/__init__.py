@@ -26,6 +26,15 @@ class ActionAI:
         openai_api_key: str | None = None,
         context: dict[str, Any] | None = None,
     ) -> None:
+        """
+        Args:
+            openai_api_key (str | None, optional): If not set, defaults \
+                to `OPENAI_API_KEY` environment variable.
+
+            context (dict[str, Any] | None, optional): These keys will be skipped \
+                when creating json schema for the function's input. The values \
+                    will be directly passed during function call.
+        """
         if openai_api_key is not None:
             openai.api_key = openai_api_key
 
