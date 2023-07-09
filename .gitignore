@@ -5,3 +5,4 @@ __pycache__
 t.py
 dist/
 .ruff_cache
+.DS_Store

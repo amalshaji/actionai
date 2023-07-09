@@ -1,0 +1,2 @@
+class ActionAIException(Exception):
+    pass
