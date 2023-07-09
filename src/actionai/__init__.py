@@ -4,12 +4,9 @@ from typing import Any, Callable, cast
 import openai
 from attr import dataclass
 
+from actionai.exceptions import ActionAIException
 from actionai.json_schema import create_json_schema_for_function_input
 from actionai.types import ChatResponse, ChatResponseMessage, Message, OpenAIFunction
-
-
-class ActionAIException(Exception):
-    pass
 
 
 @dataclass
