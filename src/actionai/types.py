@@ -1,4 +1,4 @@
-from typing import Any, Literal, TypedDict
+from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 
 class _MessageBase(TypedDict):
@@ -7,12 +7,12 @@ class _MessageBase(TypedDict):
 
 
 class Message(_MessageBase, total=False):
-    name: str | None
+    name: Optional[str]
 
 
 class _BaseChatResponseMessage(TypedDict):
     role: str
-    content: str | None
+    content: Optional[str]
 
 
 class ChatResponseFunctionCall(TypedDict):
@@ -41,14 +41,14 @@ class ChatResponse(TypedDict):
     object: str
     created: int
     model: str
-    choices: list[ChatResponseChoices]
+    choices: List[ChatResponseChoices]
     usage: ChatResponseUsage
 
 
 class OpenAIFunction(TypedDict):
     name: str
     description: str
-    parameters: dict[str, Any]
+    parameters: Dict[str, Any]
 
 
 OPENAI_MODELS = Literal[
