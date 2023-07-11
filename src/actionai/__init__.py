@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Any, Callable, cast
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import openai
 
@@ -33,16 +33,16 @@ class ActionAIFunction:
 class ActionAI:
     def __init__(
         self,
-        openai_api_key: str | None = None,
-        context: dict[str, Any] | None = None,
+        openai_api_key: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
         model: OPENAI_MODELS = "gpt-3.5-turbo-0613",
     ) -> None:
         """
         Args:
-            openai_api_key (str | None, optional): If not set, defaults \
+            openai_api_key (Optional[str]): If not set, defaults \
                 to `OPENAI_API_KEY` environment variable.
 
-            context (dict[str, Any] | None, optional): These keys will be skipped \
+            context (Optional[Dict[str, Any]]): These keys will be skipped \
                 when creating json schema for the function's input. The values \
                     will be directly passed during function call.
 
@@ -52,13 +52,13 @@ class ActionAI:
         if openai_api_key is not None:
             openai.api_key = openai_api_key
 
-        self.messages: list[Message | ChatResponseMessage] = []
+        self.messages: List[Union[Message, ChatResponseMessage]] = []
         self.context = context or {}
         self.model = model
 
         # Do not update these attributes directly
-        self._functions: dict[str, ActionAIFunction] = {}
-        self._openai_functions: list[OpenAIFunction] = []
+        self._functions: Dict[str, ActionAIFunction] = {}
+        self._openai_functions: List[OpenAIFunction] = []
 
     def register(self, fn: Callable):
         if fn.__name__ in self._functions:

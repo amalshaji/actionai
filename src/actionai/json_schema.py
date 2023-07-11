@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable
+from typing import Any, Callable, Dict, List
 
 from pydantic import create_model
 
@@ -7,16 +7,16 @@ from actionai.exceptions import ActionAIException
 
 
 def create_json_schema_for_function_input(
-    fn: Callable, skip_keys: list[str]
-) -> dict[str, Any]:
+    fn: Callable, skip_keys: List[str]
+) -> Dict[str, Any]:
     """Create json schema for a function's input
 
     Args:
         fn (Callable): The function
-        skip_keys (list[str]): The arguments to skip (context keys)
+        skip_keys (List[str]): The arguments to skip (context keys)
 
     Returns:
-        dict[str, Any]: The json schema
+        Dict[str, Any]: The json schema
     """
     signature = inspect.signature(fn)
     parameters = signature.parameters
