@@ -8,6 +8,7 @@ class _MessageBase(TypedDict):
 
 class Message(_MessageBase, total=False):
     name: Optional[str]
+    function_call: Optional[str]
 
 
 class _BaseChatResponseMessage(TypedDict):
