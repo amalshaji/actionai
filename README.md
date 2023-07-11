@@ -10,6 +10,9 @@ pip install actionai
 
 ## Usage
 
+> **Note**
+> A function must be fully typed and must have a docstring(one liner explanation of the function would be enough)
+
 ```python
 # define a new function
 def get_current_weather(location: str, unit: str = "fahrenheit"):
@@ -55,9 +58,6 @@ action = actionai.ActionAI(context={"user": "jason"})
 ```
 
 The context keys are skipped when creating json schema. The values are directly passed at the time of function calling.
-
-> **Warning**
-> A function must be fully typed and must have a docstring(one liner explanation of the function is enough)
 
 ### Choosing a model
 
