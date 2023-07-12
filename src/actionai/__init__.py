@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import openai
 
@@ -31,11 +31,17 @@ class ActionAIFunction:
 
 
 class ActionAI:
+    DEFAULT_SYSTEM_PROMPT = "Don't make assumptions about what values to \
+                    plug into functions. Ask for clarification if a user \
+                        request is ambiguous."
+
     def __init__(
         self,
         openai_api_key: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
         model: OPENAI_MODELS = "gpt-3.5-turbo-0613",
+        system_prompt: Optional[str] = None,
+        temperature: int = 1,
     ) -> None:
         """
         Args:
@@ -49,16 +55,34 @@ class ActionAI:
             model (optional): The chat completion model to use. Defaults to \
                 "gpt-3.5-turbo-0613".
         """
+        assert (
+            temperature >= 0 and temperature <= 2
+        ), "Temperature must be between 0 and 2"
+
         if openai_api_key is not None:
             openai.api_key = openai_api_key
 
-        self.messages: List[Union[Message, ChatResponseMessage]] = []
+        self.messages: List[Message] = []
         self.context = context or {}
         self.model = model
+        self.system_prompt = system_prompt or self.DEFAULT_SYSTEM_PROMPT
+        self.temperature = temperature
 
         # Do not update these attributes directly
         self._functions: Dict[str, ActionAIFunction] = {}
         self._openai_functions: List[OpenAIFunction] = []
+
+    def _add_system_prompt(self):
+        self.messages.append(
+            {
+                "role": "system",
+                "content": self.system_prompt,
+            }
+        )
+
+    def set_messages(self, messages: List[Message]):
+        self._add_system_prompt()
+        self.messages = messages
 
     def register(self, fn: Callable):
         if fn.__name__ in self._functions:
@@ -78,39 +102,47 @@ class ActionAI:
         self._functions[fn.__name__] = action_function
         self._openai_functions.append(action_function.to_openai_function())
 
-    def prompt(self, query: str) -> ChatResponse:
-        self.messages.append({"role": "user", "content": query})
-
+    def _create_chat_completion(self) -> ChatResponse:
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=self.messages,
             functions=self._openai_functions,
             function_call="auto",
+            temperature=self.temperature,
         )
-
         response = cast(ChatResponse, response)
-
         response_message = response["choices"][0]["message"]
+        self.messages.append(response_message)  # type: ignore
 
         if response_message.get("function_call") is None:
             return response
 
-        function_name = response_message["function_call"]["name"]
-        fuction_to_call = self._functions[function_name].fn
-        function_args = json.loads(response_message["function_call"]["arguments"])
-        function_response = fuction_to_call(**function_args, **self.context)
-
-        self.messages.append(response_message)
+        function_response = self._execute_function(response_message)
         self.messages.append(
             {
                 "role": "function",
-                "name": function_name,
+                "name": response_message["function_call"]["name"],
                 "content": json.dumps(function_response, default=str),
             }
         )
-        second_response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=self.messages,
+
+        response = openai.ChatCompletion.create(
+            model=self.model, messages=self.messages, temperature=self.temperature
         )
-        second_response = cast(ChatResponse, second_response)
-        return second_response
+
+        response = cast(ChatResponse, response)
+        self.messages.append(response["choices"][0]["message"])  # type: ignore
+        return response
+
+    def _execute_function(self, response_message: ChatResponseMessage) -> Any:
+        function_name = response_message["function_call"]["name"]
+        fuction_to_call = self._functions[function_name].fn
+        function_args = json.loads(response_message["function_call"]["arguments"])
+        return fuction_to_call(**function_args, **self.context)
+
+    def prompt(self, query: str) -> ChatResponse:
+        if len(self.messages) == 0:
+            self._add_system_prompt()
+
+        self.messages.append({"role": "user", "content": query})
+        return self._create_chat_completion()
