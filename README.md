@@ -2,6 +2,9 @@
 
 A small library to run local functions using the openai function calling
 
+> **Warning**
+> This library is still in its early stages, so please use it cautiously. If you find any bugs, please create a new issue.
+
 ## Install
 
 ```shell
@@ -11,7 +14,7 @@ pip install actionai
 ## Usage
 
 > **Note**
-> A function must be fully typed and must have a docstring(one liner explanation of the function would be enough)
+> A function must be fully typed and must have a docstring
 
 ```python
 # define a new function
